@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     uint256 public constant PRICE_MULTIPLIER = 10**18;
-    uint256 public feePercent = 5;
+    uint256 public feePercent;
 
     struct SellOrder {
         address seller;
@@ -41,10 +41,12 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
     event OrderFulfilled(uint256 indexed orderId, bool isSellOrder, address counterparty, uint256 amount);
     event OrderPartiallyFulfilled(uint256 indexed orderId, bool isSellOrder, address counterparty, uint256 amount);
 
-    function initialize() public initializer {
-        OwnableUpgradeable.__Ownable_init(msg.sender);
-        ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
-    }
+    function initialize(uint256 _initialFeePercent) public initializer {
+    OwnableUpgradeable.__Ownable_init(msg.sender);
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+    require(_initialFeePercent <= 1000, "Fee cannot exceed 100%");
+    feePercent = _initialFeePercent;
+}
 
     function setFeePercent(uint256 _newFeePercent) external onlyOwner {
         require(_newFeePercent <= 1000, "Fee cannot exceed 100%");
