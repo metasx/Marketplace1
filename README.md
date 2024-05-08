@@ -1,4 +1,5 @@
-﻿###  直接在remix上部署， 先部署   ProxyAdmin   再部署  TokenMarketplace   最后部署  ITransparentUpgradeableProxy
+ ##  仅供测试使用   test
+ ###  直接在remix上部署， 先部署   ProxyAdmin   再部署  TokenMarketplace   最后部署  ITransparentUpgradeableProxy
 
 
 
@@ -23,4 +24,4 @@ TokenMarketplace ：0xC68Ef54F9b95cf71a7f806C4c74b0bC47691d85f
 
 
 
-# 已创建一个SellOrder 订单  ID:12   花0.1个ETH去购买，进行后续测试
+# 已创建一个SellOrder 订单  ID:0   花0.1个ETH去购买，进行后续测试
