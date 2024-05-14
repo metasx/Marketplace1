@@ -67,7 +67,7 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "price",
+				"name": "unitPrice",
 				"type": "uint256"
 			},
 			{
@@ -229,7 +229,7 @@
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "price",
+				"name": "unitPrice",
 				"type": "uint256"
 			},
 			{
