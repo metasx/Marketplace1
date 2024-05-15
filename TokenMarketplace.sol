@@ -50,7 +50,6 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     require(_initialFeePercent <= 1000, "Fee cannot exceed 100%");
     feePercent = _initialFeePercent;
-    // maxbatchsize = 10;
 }
 
     function setFeePercent(uint256 _newFeePercent) external onlyOwner {
