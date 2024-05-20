@@ -16,8 +16,7 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
         uint256 totalAmount;
         uint256 totalPrice; 
         uint256 amount;
-        uint256 price;
-        uint256 unitPrice; 
+        uint256 price; 
         bool isActive;
         address tokenAddress;
     }
@@ -27,8 +26,7 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
         uint256 totalPrice; 
         address buyer;
         uint256 amount;
-        uint256 price;
-        uint256 unitPrice; 
+        uint256 price; 
         bool isActive;
         address tokenAddress;
     }
@@ -44,6 +42,31 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
     event OrderPartiallyFulfilled(uint256 indexed orderId, bool isSellOrder, address counterparty, uint256 amount);
 
     uint256 public maxbatchsize;
+
+    struct NewSellOrder {
+        address seller;
+        uint256 totalAmount;
+        uint256 totalPrice; 
+        uint256 amount;
+        uint256 price;
+        uint256 unitPrice; 
+        bool isActive;
+        address tokenAddress;
+    }
+
+    struct NewBuyOrder {
+        uint256 totalAmount;
+        uint256 totalPrice; 
+        address buyer;
+        uint256 amount;
+        uint256 price;
+        uint256 unitPrice; 
+        bool isActive;
+        address tokenAddress;
+    }
+
+    NewSellOrder[] public newSellOrders;
+    NewBuyOrder[] public newBuyOrders;
 
     function initialize(uint256 _initialFeePercent) public initializer {
     OwnableUpgradeable.__Ownable_init(msg.sender);
@@ -81,7 +104,7 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
         require(token.transferFrom(msg.sender, address(this), amount), "Token transfer failed");
         uint256 totalPrice = unitPrice * amount / PRICE_MULTIPLIER;
 
-        sellOrders.push(SellOrder({
+        newSellOrders.push(NewSellOrder({
             seller: msg.sender,
             totalAmount: amount / PRICE_MULTIPLIER,
             totalPrice: totalPrice,
@@ -92,7 +115,7 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
             tokenAddress: tokenAddress
         }));
         
-        emit SellOrderCreated(sellOrders.length - 1, msg.sender, amount, totalPrice, amount, unitPrice, tokenAddress);
+        emit SellOrderCreated(newSellOrders.length - 1, msg.sender, amount, totalPrice, amount, unitPrice, tokenAddress);
     }
 
     function createBuyOrder(address tokenAddress, uint256 amount, uint256 unitPrice) public payable nonReentrant {
@@ -101,7 +124,7 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
         uint256 totalPrice = unitPrice * amount / PRICE_MULTIPLIER;
         require(msg.value == totalPrice, "Incorrect ETH amount");
 
-        buyOrders.push(BuyOrder({
+        newBuyOrders.push(NewBuyOrder({
             buyer: msg.sender,
             totalAmount: amount / PRICE_MULTIPLIER,
             totalPrice: totalPrice,
@@ -112,13 +135,13 @@ contract TokenMarketplace is Initializable, OwnableUpgradeable, ReentrancyGuardU
             tokenAddress: tokenAddress
         }));
 
-        emit BuyOrderCreated(buyOrders.length - 1, msg.sender, amount, totalPrice, amount, unitPrice, tokenAddress);
+        emit BuyOrderCreated(newBuyOrders.length - 1, msg.sender, amount, totalPrice, amount, unitPrice, tokenAddress);
     }
 
 
     function acceptSellOrder(uint256 orderId, uint256 amountToBuy) public payable nonReentrant {
-    require(orderId < sellOrders.length, "Invalid order ID");
-    SellOrder storage order = sellOrders[orderId];
+    require(orderId < newSellOrders.length, "Invalid order ID");
+    NewSellOrder storage order = newSellOrders[orderId];
     require(tokenListed[order.tokenAddress], "Token not listed");
     require(order.isActive, "Order is not active");
     require(amountToBuy <= order.amount * PRICE_MULTIPLIER, "Amount exceeds order availability");
@@ -152,8 +175,8 @@ function batchAcceptSellOrders(uint256[] calldata orderIds, uint256[] calldata a
     uint256 totalEthAmount = 0; 
 
     for (uint256 i = 0; i < orderIds.length; i++) {
-        require(orderIds[i] < sellOrders.length, "Invalid order ID");
-        SellOrder storage order = sellOrders[orderIds[i]];
+        require(orderIds[i] < newSellOrders.length, "Invalid order ID");
+        NewSellOrder storage order = newSellOrders[orderIds[i]];
         require(tokenListed[order.tokenAddress], "Token not listed");
         require(order.isActive, "Order is not active");
         require(amountsToBuy[i] <= order.amount * PRICE_MULTIPLIER, "Amount exceeds order availability");
@@ -186,8 +209,8 @@ function batchAcceptSellOrders(uint256[] calldata orderIds, uint256[] calldata a
 
 
    function acceptBuyOrder(uint256 orderId, uint256 amountToSell) public nonReentrant {
-    require(orderId < buyOrders.length, "Invalid order ID");
-    BuyOrder storage order = buyOrders[orderId];
+    require(orderId < newBuyOrders.length, "Invalid order ID");
+    NewBuyOrder storage order = newBuyOrders[orderId];
     require(tokenListed[order.tokenAddress], "Token not listed");
     require(order.isActive, "Order is not active");
     require(amountToSell <= order.amount * PRICE_MULTIPLIER, "Amount exceeds order availability");
@@ -224,8 +247,8 @@ function batchAcceptSellOrders(uint256[] calldata orderIds, uint256[] calldata a
 }
 
     function cancelSellOrder(uint256 orderId) public nonReentrant {
-        require(orderId < sellOrders.length, "Invalid order ID");
-        SellOrder storage order = sellOrders[orderId];
+        require(orderId < newSellOrders.length, "Invalid order ID");
+        NewSellOrder storage order = newSellOrders[orderId];
         require(order.seller == msg.sender, "Not the seller");
         require(order.isActive, "Order is not active");
 
@@ -236,8 +259,8 @@ function batchAcceptSellOrders(uint256[] calldata orderIds, uint256[] calldata a
     }
 
     function cancelBuyOrder(uint256 orderId) public nonReentrant {
-        require(orderId < buyOrders.length, "Invalid order ID");
-        BuyOrder storage order = buyOrders[orderId];
+        require(orderId < newBuyOrders.length, "Invalid order ID");
+        NewBuyOrder storage order = newBuyOrders[orderId];
         require(order.buyer == msg.sender, "Not the buyer");
         require(order.isActive, "Order is not active");
 
@@ -247,12 +270,12 @@ function batchAcceptSellOrders(uint256[] calldata orderIds, uint256[] calldata a
         emit OrderCancelled(orderId, false);
     }
 
-    function getSellOrdersCount() public view returns (uint256) {
-    return sellOrders.length;
+    function getNewSellOrdersCount() public view returns (uint256) {
+    return newSellOrders.length;
     }
 
-    function getBuyOrdersCount() public view returns (uint256) {
-    return buyOrders.length;
+    function getNewBuyOrdersCount() public view returns (uint256) {
+    return newBuyOrders.length;
     }
 
 
